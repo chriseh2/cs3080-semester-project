@@ -44,15 +44,15 @@ class Location:
 class Weather:
     def __init__(self, location: Location):
         self.location = location
-        self.temp = None
-        self.feels_like = None
-        self.pressure = None
-        self.humidity = None
+        self.temp = 0
+        self.feels_like = 0
+        self.pressure = 0
+        self.humidity = 0
         self.clouds = None
-        self.visibility = None
-        self.wind_speed = None
-        self.wind_gust = None
-        self.wind_deg = None
+        self.visibility = 0
+        self.wind_speed = 0
+        self.wind_gust = 0
+        self.wind_deg = 0
         self.condition = None
         self.condition_description = None
 
