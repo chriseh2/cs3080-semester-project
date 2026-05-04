@@ -23,9 +23,8 @@ class Location:
         self.state = state
         self.latitude = latitude
         self.longitude = longitude
-        coordinates = self.get_coordinates(self)
+        coordinates = self.get_coordinates()
 
-    @staticmethod
     def get_coordinates(self):
         """Translate plain text city and state into lat and long coords"""
         try:
@@ -60,9 +59,8 @@ class Weather(Location):
         self.wind_deg = wind_deg
         self.condition = condition
         self.condition_description = condition_description
-        self.get_weather(self)
+        self.get_weather()
         
-    @staticmethod
     def get_weather(self):
         try:
             response = requests.get(f"https://api.openweathermap.org/data/2.5/weather?lat={self.latitude}&lon={self.longitude}&appid={OPENWEATHERMAP_API_KEY}")
@@ -77,8 +75,8 @@ class Weather(Location):
         return (temp_K-273.15)*(9/5)+32
     
     @staticmethod
-    def km_to_mi(dist_km):
-        return dist_km*0.621371
+    def m_to_mi(dist_m):
+        return dist_m/1609
     
     @staticmethod
     def ms_to_mph(speed_ms):
@@ -136,7 +134,7 @@ class Weather(Location):
         self.condition = data['weather'][0]['main']
         self.condition_description = data['weather'][0]['description']
 
-    def print(self):
+    def print_weather(self):
         print(f"Forecast for {self.city}, {self.state}:")
         print(f"      Current Condition: {self.condition} ({self.condition_description})")
         print(f"      Temperature: {self.temp} kelvin ({self.k_to_f(self.temp):.2f} fahrenheit)")
@@ -144,10 +142,10 @@ class Weather(Location):
         print(f"      Pressure: {self.pressure} hPa")
         print(f"      Humidity: {self.humidity} %")
         print(f"      Clouds: {self.clouds} %")
-        print(f"      Visibility: {self.visibility} km ({self.km_to_mi(self.visibility):.2f} miles)")
+        print(f"      Visibility: {self.visibility} m ({self.m_to_mi(self.visibility):.2f} miles)")
         print(f"      Wind Speed: {self.wind_speed} m/s ({self.ms_to_mph(self.wind_speed):.2f} mph)")
         print(f"      Wind Gust: {self.wind_gust} m/s ({self.ms_to_mph(self.wind_gust):.2f} mph)")
-        print(f"      Wind Degress: {self.wind_deg} degrees ({self.degrees_to_direction(self.wind_deg)})")
+        print(f"      Wind Degrees: {self.wind_deg} degrees ({self.degrees_to_direction(self.wind_deg)})")
 
 if __name__=="__main__":
     # User input
@@ -155,5 +153,5 @@ if __name__=="__main__":
     state_input = input("State: ")
 
     # Initialize Weather Object
-    Weather = Weather(city_input, state_input)
-    Weather.print()
+    Weather_object = Weather(city_input, state_input)
+    Weather_object.print_weather()
