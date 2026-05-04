@@ -145,9 +145,11 @@ class Weather:
         print(f"  Wind Degrees: {self.wind_deg} degrees ({self.degrees_to_direction(self.wind_deg)})")
 
 if __name__ == "__main__":
+    #user input
     city_input = input("City: ")
     state_input = input("State: ")
 
+    #init objects
     location = Location(city_input, state_input)
     weather = Weather(location)
     weather.fetch()
