@@ -12,63 +12,73 @@ Features:
 API docs: https://openweathermap.org/api/one-call-3?collection=one_call_api_3.0
 '''
 
-import requests
 import os
+import requests
 
 OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
 
 class Location:
-    def __init__(self, city, state, latitude=None, longitude=None):
+    def __init__(self, city, state):
         self.city = city
         self.state = state
-        self.latitude = latitude
-        self.longitude = longitude
-        coordinates = self.get_coordinates()
+        self.latitude = None
+        self.longitude = None
+        self.resolve_coordinates()
 
-    def get_coordinates(self):
-        """Translate plain text city and state into lat and long coords"""
-        try:
-            response = requests.get(f"http://api.openweathermap.org/geo/1.0/direct?q={self.city},{self.state},USA&limit=1&appid={OPENWEATHERMAP_API_KEY}")
-            data = response.json()
-            if len(data) > 0:
-                self.latitude = data[0]["lat"]
-                self.longitude = data[0]["lon"]
-            elif len(data) == 0:
-                raise ValueError("No verified locations were found using the provided city and state.")
-        except requests.exceptions.RequestException as e:
-            print(f"Something went wrong: {e}")
+    def resolve_coordinates(self):
+        url = (
+            "http://api.openweathermap.org/geo/1.0/direct"
+            f"?q={self.city},{self.state},USA&limit=1&appid={OPENWEATHERMAP_API_KEY}"
+        )
+        response = requests.get(url)
+        response.raise_for_status()
 
-class Weather(Location):
-    def __init__(
-            self, city, state,
-            temp=None, feels_like=None,
-            pressure=None, humidity=None,
-            clouds=None, visibility=None,
-            wind_speed=None, wind_gust=None, wind_deg=None,
-            condition=None, condition_description=None
-            ):
-        super().__init__(city, state)
-        self.temp = temp
-        self.feels_like = feels_like
-        self.pressure = pressure
-        self.humidity = humidity
-        self.clouds = clouds
-        self.visibility = visibility
-        self.wind_speed = wind_speed
-        self.wind_gust = wind_gust
-        self.wind_deg = wind_deg
-        self.condition = condition
-        self.condition_description = condition_description
-        self.get_weather()
-        
-    def get_weather(self):
-        try:
-            response = requests.get(f"https://api.openweathermap.org/data/2.5/weather?lat={self.latitude}&lon={self.longitude}&appid={OPENWEATHERMAP_API_KEY}")
-            data = response.json()
-            self.parse_weather(data)
-            print(data)
-        except requests.exceptions.RequestException as e:
-            print(f"Something went wrong: {e}")
+        data = response.json()
+        if not data:
+            raise ValueError("No verified location found for that city/state.")
+
+        self.latitude = data[0]["lat"]
+        self.longitude = data[0]["lon"]
+
+
+class Weather:
+    def __init__(self, location: Location):
+        self.location = location
+        self.temp = None
+        self.feels_like = None
+        self.pressure = None
+        self.humidity = None
+        self.clouds = None
+        self.visibility = None
+        self.wind_speed = None
+        self.wind_gust = None
+        self.wind_deg = None
+        self.condition = None
+        self.condition_description = None
+
+    def fetch(self):
+        url = (
+            "https://api.openweathermap.org/data/2.5/weather"
+            f"?lat={self.location.latitude}&lon={self.location.longitude}"
+            f"&appid={OPENWEATHERMAP_API_KEY}"
+        )
+        response = requests.get(url)
+        response.raise_for_status()
+        self.parse(response.json())
+
+    def parse(self, data):
+        self.temp = data["main"]["temp"]
+        self.feels_like = data["main"]["feels_like"]
+        self.pressure = data["main"]["pressure"]
+        self.humidity = data["main"]["humidity"]
+        self.clouds = data["clouds"]["all"]
+        self.visibility = data.get("visibility")
+        wind = data.get("wind", {})
+        self.wind_speed = wind.get("speed")
+        self.wind_gust = wind.get("gust")
+        self.wind_deg = wind.get("deg")
+        self.condition = data["weather"][0]["main"]
+        self.condition_description = data["weather"][0]["description"]
 
     @staticmethod
     def k_to_f(temp_K):
@@ -121,37 +131,24 @@ class Weather(Location):
         else:
             return "NaN"
 
-    def parse_weather(self, data):
-        self.temp = data['main']['temp']
-        self.feels_like = data['main']['feels_like']
-        self.pressure = data['main']['pressure']
-        self.humidity = data['main']['humidity']
-        self.clouds = data['clouds']['all']
-        self.visibility = data['visibility']
-        self.wind_speed = data['wind']['speed']
-        self.wind_gust = data['wind']['gust']
-        self.wind_deg = data['wind']['deg']
-        self.condition = data['weather'][0]['main']
-        self.condition_description = data['weather'][0]['description']
+    def print_report(self):
+        print(f"Forecast for {self.location.city}, {self.location.state}:")
+        print(f"  Condition: {self.condition} ({self.condition_description})")
+        print(f"  Temperature: {self.temp} K ({self.k_to_f(self.temp):.2f} fahrenheit)")
+        print(f"  Feels Like: {self.feels_like} kelvin ({self.k_to_f(self.feels_like):.2f} fahrenheit)")
+        print(f"  Pressure: {self.pressure} hPa")
+        print(f"  Humidity: {self.humidity} %")
+        print(f"  Clouds: {self.clouds} %")
+        print(f"  Visibility: {self.visibility} m ({self.m_to_mi(self.visibility):.2f} miles)")
+        print(f"  Wind Speed: {self.wind_speed} m/s ({self.ms_to_mph(self.wind_speed):.2f} mph)")
+        print(f"  Wind Gust: {self.wind_gust} m/s ({self.ms_to_mph(self.wind_gust):.2f} mph)")
+        print(f"  Wind Degrees: {self.wind_deg} degrees ({self.degrees_to_direction(self.wind_deg)})")
 
-    def print_weather(self):
-        print(f"Forecast for {self.city}, {self.state}:")
-        print(f"      Current Condition: {self.condition} ({self.condition_description})")
-        print(f"      Temperature: {self.temp} kelvin ({self.k_to_f(self.temp):.2f} fahrenheit)")
-        print(f"      Feels Like: {self.feels_like} kelvin ({self.k_to_f(self.feels_like):.2f} fahrenheit)")
-        print(f"      Pressure: {self.pressure} hPa")
-        print(f"      Humidity: {self.humidity} %")
-        print(f"      Clouds: {self.clouds} %")
-        print(f"      Visibility: {self.visibility} m ({self.m_to_mi(self.visibility):.2f} miles)")
-        print(f"      Wind Speed: {self.wind_speed} m/s ({self.ms_to_mph(self.wind_speed):.2f} mph)")
-        print(f"      Wind Gust: {self.wind_gust} m/s ({self.ms_to_mph(self.wind_gust):.2f} mph)")
-        print(f"      Wind Degrees: {self.wind_deg} degrees ({self.degrees_to_direction(self.wind_deg)})")
-
-if __name__=="__main__":
-    # User input
+if __name__ == "__main__":
     city_input = input("City: ")
     state_input = input("State: ")
 
-    # Initialize Weather Object
-    Weather_object = Weather(city_input, state_input)
-    Weather_object.print_weather()
+    location = Location(city_input, state_input)
+    weather = Weather(location)
+    weather.fetch()
+    weather.print_report()
