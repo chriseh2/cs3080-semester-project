@@ -89,8 +89,8 @@ class Weather:
         return dist_m/1609
     
     @staticmethod
-    def ms_to_mph(speed_ms):
-        return speed_ms*2.237
+    def mps_to_mph(speed_mps):
+        return speed_mps*2.237
     
     @staticmethod
     def degrees_to_direction(degrees):
@@ -140,7 +140,7 @@ class Weather:
         print(f"  Humidity: {self.humidity} %")
         print(f"  Clouds: {self.clouds} %")
         print(f"  Visibility: {self.visibility} m ({self.m_to_mi(self.visibility):.2f} miles)")
-        print(f"  Wind Speed: {self.wind_speed} m/s ({self.ms_to_mph(self.wind_speed):.2f} mph)")
+        print(f"  Wind Speed: {self.wind_speed} m/s ({self.mps_to_mph(self.wind_speed):.2f} mph)")
         print(f"  Wind Gust: {self.wind_gust} m/s ({self.ms_to_mph(self.wind_gust):.2f} mph)")
         print(f"  Wind Degrees: {self.wind_deg} degrees ({self.degrees_to_direction(self.wind_deg)})")
 
