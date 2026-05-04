@@ -48,7 +48,7 @@ class Weather:
         self.feels_like = 0
         self.pressure = 0
         self.humidity = 0
-        self.clouds = None
+        self.clouds = 0
         self.visibility = 0
         self.wind_speed = 0
         self.wind_gust = 0
@@ -82,15 +82,24 @@ class Weather:
 
     @staticmethod
     def k_to_f(temp_K):
-        return (temp_K-273.15)*(9/5)+32
+        if not temp_K == None:
+            return (temp_K-273.15)*(9/5)+32
+        else:
+            return 0
     
     @staticmethod
     def m_to_mi(dist_m):
-        return dist_m/1609
+        if not dist_m == None:
+            return dist_m/1609
+        else:
+            return 0
     
     @staticmethod
     def mps_to_mph(speed_mps):
-        return speed_mps*2.237
+        if not speed_mps == None:
+            return speed_mps*2.237
+        else:
+            return 0
     
     @staticmethod
     def degrees_to_direction(degrees):
