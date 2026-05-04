@@ -13,8 +13,9 @@ API docs: https://openweathermap.org/api/one-call-3?collection=one_call_api_3.0
 '''
 
 import requests
+import os
 
-OPENWEATHERMAP_API_KEY = ""
+OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
 
 class Location:
     def __init__(self, city, state, latitude=None, longitude=None):
@@ -41,29 +42,22 @@ class Location:
 class Weather(Location):
     def __init__(
             self, city, state,
-            sunrise=None, sunset=None,
             temp=None, feels_like=None,
-            pressure=None, humidity=None, dew_point=None,
-            clouds=None, uvi=None, visibility=None,
+            pressure=None, humidity=None,
+            clouds=None, visibility=None,
             wind_speed=None, wind_gust=None, wind_deg=None,
-            rain=None, snow=None, condition=None, condition_description=None
+            condition=None, condition_description=None
             ):
         super().__init__(city, state)
-        self.sunrise = sunrise
-        self.sunset = sunset
         self.temp = temp
         self.feels_like = feels_like
         self.pressure = pressure
         self.humidity = humidity
-        self.dew_point = dew_point
         self.clouds = clouds
-        self.uvi = uvi
         self.visibility = visibility
         self.wind_speed = wind_speed
         self.wind_gust = wind_gust
         self.wind_deg = wind_deg
-        self.rain = rain
-        self.snow = snow
         self.condition = condition
         self.condition_description = condition_description
         self.get_weather(self)
@@ -74,30 +68,86 @@ class Weather(Location):
             response = requests.get(f"https://api.openweathermap.org/data/2.5/weather?lat={self.latitude}&lon={self.longitude}&appid={OPENWEATHERMAP_API_KEY}")
             data = response.json()
             self.parse_weather(data)
+            print(data)
         except requests.exceptions.RequestException as e:
             print(f"Something went wrong: {e}")
 
+    @staticmethod
+    def k_to_f(temp_K):
+        return (temp_K-273.15)*(9/5)+32
+    
+    @staticmethod
+    def km_to_mi(dist_km):
+        return dist_km*0.621371
+    
+    @staticmethod
+    def ms_to_mph(speed_ms):
+        return speed_ms*2.237
+    
+    @staticmethod
+    def degrees_to_direction(degrees):
+        if (0 <= degrees <= 11):
+            return "North (N)"
+        elif (11 < degrees <= 33):
+            return "North-Northeast (NNE)"
+        elif (33 < degrees <= 56):
+            return "Northeast (NE)"
+        elif (56 < degrees <= 78):
+            return "East-Northeast (ENE)"
+        elif (78 < degrees <= 101):
+            return "East"
+        elif (101 < degrees <= 123):
+            return "East-Southeast (ESE)"
+        elif (123 < degrees <= 146):
+            return "Southeast (SE)"
+        elif (146 < degrees <= 168):
+            return "South-Southeast (SSE)"
+        elif (168 < degrees <= 191):
+            return "South (S)"
+        elif (191 < degrees <= 213):
+            return "South-Southwest (SSW)"
+        elif (213 < degrees <= 236):
+            return "Southwest (SW)"
+        elif (236 < degrees <= 258):
+            return "West-Southwest (WSW)"
+        elif (258 < degrees <= 281):
+            return "West (W)"
+        elif (281 < degrees <= 303):
+            return "West-Northwest (WNW)"
+        elif (303 < degrees <= 326):
+            return "Northwest (NW)"
+        elif (326 < degrees <= 348):
+            return "North-Northwest (NNW)"
+        elif (348 < degrees <= 360):
+            return "North (N)"
+        else:
+            return "NaN"
+
     def parse_weather(self, data):
-        #self.sunrise = sunrise
-        #self.sunset = sunset
-        #self.temp = temp
-        #self.feels_like = feels_like
-        #self.pressure = pressure
-        #self.humidity = humidity
-        #self.dew_point = dew_point
-        #self.clouds = clouds
-        #self.uvi = uvi
-        #self.visibility = visibility
-        #self.wind_speed = wind_speed
-        #self.wind_gust = wind_gust
-        #self.wind_deg = wind_deg
-        #self.rain = rain
-        #self.snow = snow
+        self.temp = data['main']['temp']
+        self.feels_like = data['main']['feels_like']
+        self.pressure = data['main']['pressure']
+        self.humidity = data['main']['humidity']
+        self.clouds = data['clouds']['all']
+        self.visibility = data['visibility']
+        self.wind_speed = data['wind']['speed']
+        self.wind_gust = data['wind']['gust']
+        self.wind_deg = data['wind']['deg']
         self.condition = data['weather'][0]['main']
         self.condition_description = data['weather'][0]['description']
 
     def print(self):
-        print(f"==== Forecast for {self.city}, {self.state}: ====")
+        print(f"Forecast for {self.city}, {self.state}:")
+        print(f"      Current Condition: {self.condition} ({self.condition_description})")
+        print(f"      Temperature: {self.temp} kelvin ({self.k_to_f(self.temp):.2f} fahrenheit)")
+        print(f"      Feels Like: {self.feels_like} kelvin ({self.k_to_f(self.feels_like):.2f} fahrenheit)")
+        print(f"      Pressure: {self.pressure} hPa")
+        print(f"      Humidity: {self.humidity} %")
+        print(f"      Clouds: {self.clouds} %")
+        print(f"      Visibility: {self.visibility} km ({self.km_to_mi(self.visibility):.2f} miles)")
+        print(f"      Wind Speed: {self.wind_speed} m/s ({self.ms_to_mph(self.wind_speed):.2f} mph)")
+        print(f"      Wind Gust: {self.wind_gust} m/s ({self.ms_to_mph(self.wind_gust):.2f} mph)")
+        print(f"      Wind Degress: {self.wind_deg} degrees ({self.degrees_to_direction(self.wind_deg)})")
 
 if __name__=="__main__":
     # User input
@@ -106,3 +156,4 @@ if __name__=="__main__":
 
     # Initialize Weather Object
     Weather = Weather(city_input, state_input)
+    Weather.print()
